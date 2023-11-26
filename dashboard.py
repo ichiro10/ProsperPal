@@ -13,6 +13,13 @@ df = pd.read_csv('./Transactions.csv')
 #drop Null values
 df.dropna(inplace=True)
 
+revenue = df.groupby('Category')['Amount'].sum()
+desc = revenue.sort_values(ascending = False)
+revenue = desc.head(10)
+
+exclude = ['Other']
+revenue = revenue.loc[~revenue.index.isin(exclude)]
+print(revenue)
 #initializing dashboard
 st.title("My wallet")
 ticker = st.sidebar.text_input('Client ID')
@@ -53,4 +60,17 @@ else :
 
 # Line chart
 fig = px.line(filtered_df, x="Date", y="Amount", title="Expense Over Time")
+st.plotly_chart(fig)
+
+
+df = pd.read_csv('./Transactions.csv')
+
+mode = df["Mode"].value_counts().reset_index()
+# Create a pie chart using Plotly Express with a custom title
+fig = px.pie(mode, values='count', names='Mode', title='Transaction Modes Distribution')
+st.plotly_chart(fig)
+
+
+ie = df['Income/Expense'].value_counts().reset_index()
+fig = px.pie(ie, values='count', names='Income/Expense', title='Distribution of transactions across Income/Expense')
 st.plotly_chart(fig)
