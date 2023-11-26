@@ -8,6 +8,8 @@ def main():
     # Initialisation du gestionnaire de budget
     budget_manager = BudgetManagement(user_data)
 
+    
+
     # Analyse des habitudes de dépenses
     budget_manager.analyze_spending_habits()
 
