@@ -6,27 +6,7 @@ from sklearn.metrics import mean_squared_error
 import pandas as pd
 from alpha_vantage.timeseries import TimeSeries
 
-# Remplacez 'YOUR_API_KEY' par votre clé d'API Alpha Vantage
-api_key = 'YOUR_API_KEY'
-symbol = 'MSFT'
-interval = 'daily'  # Peut être 'daily', 'weekly', 'monthly', etc.
-start_date = '2022-01-01'
-end_date = '2023-01-01'
-
-# Initialiser la classe TimeSeries avec votre clé d'API
-ts = TimeSeries(key=api_key, output_format='pandas')
-
-# Obtenir les données du cours des actions
-data, meta_data = ts.get_daily(symbol=symbol, outputsize='full')
-
-# Filtrer les données pour la période spécifiée
-filtered_data = data[(data.index >= start_date) & (data.index <= end_date)]
-
-# Afficher les premières lignes des données
-print(filtered_data.head())
-
-# Enregistrer les données dans un fichier CSV
-filtered_data.to_csv('stock_data_alpha_vantage.csv')
+label = "Description"
 
 class InvestmentRegressor:
     def __init__(self, data):
@@ -38,15 +18,35 @@ class InvestmentRegressor:
         self.y_test = None
 
     def train(self):
-        # Assuming 'target' is the label column
-        X = self.data.drop('target', axis=1)
-        y = self.data['target']
-        
+        # Check if label column is present
+        if label not in self.data.columns:
+            print(f"Error: '{label}' not found in the dataset.")
+            return
+
+        # Assuming 'label' is the column with dates
+        y = self.data[label]
+
+        # Drop rows with invalid dates
+        self.data = self.data[pd.to_datetime(y, errors='coerce').notna()]
+
+        # Extract features from dates
+        self.data['Year'] = pd.to_datetime(self.data[label]).dt.year
+        self.data['Month'] = pd.to_datetime(self.data[label]).dt.month
+        self.data['Day'] = pd.to_datetime(self.data[label]).dt.day
+        self.data['Weekday'] = pd.to_datetime(self.data[label]).dt.weekday
+
+        # Check if all necessary columns are present
+        if self.data.empty or 'Year' not in self.data.columns or 'Month' not in self.data.columns or 'Day' not in self.data.columns or 'Weekday' not in self.data.columns:
+            print("Error: Columns missing after data cleaning.")
+            return
+
         # Split the data into training and testing sets
+        X = self.data.drop(label, axis=1)
+        y = self.data[label]
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             X, y, test_size=0.2, random_state=42
         )
-        
+
         # Train the model
         self.model.fit(self.X_train, self.y_train)
 
@@ -58,13 +58,19 @@ class InvestmentRegressor:
 
         # Make predictions on the test set
         y_pred = self.model.predict(self.X_test)
-        
+
         # Evaluate the model
         mse = mean_squared_error(self.y_test, y_pred)
         print(f"Mean Squared Error: {mse}")
 
 # Example Usage:
-# data = ...  # Load your dataset
-# investment_model = InvestmentRegressor(data)
-# investment_model.train()
-# investment_model.evaluate()
+chemin_du_fichier = 'personal-investments.csv'
+
+# Lire le fichier CSV
+data = pd.read_csv(chemin_du_fichier, parse_dates=[label])  # Load your dataset
+
+investment_model = InvestmentRegressor(data)
+investment_model.train()
+investment_model.evaluate()
+
+
