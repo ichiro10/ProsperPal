@@ -104,6 +104,3 @@ class CreditScoreClassifier:
             joblib.dump(self.best_model['model'], model_filename)
             print(f"\nBest model '{self.best_model['name']}' saved to {model_filename}")
 
-# Example usage
-# classifier_instance = CreditScoreClassifier(your_data)
-# classifier_instance.train()
